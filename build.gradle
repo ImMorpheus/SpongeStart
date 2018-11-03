@@ -1,4 +1,5 @@
 plugins {
+    id 'java-gradle-plugin'
     id 'com.gradle.plugin-publish' version '0.10.0'
 }
 
@@ -15,9 +16,12 @@ repositories {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.12'
     compile 'org.json:json:20180130'
-    compile gradleApi()
+
+    testCompile gradleTestKit()
+    testCompile('org.junit.jupiter:junit-jupiter-api:5.3.1')
+    testCompile('org.junit.jupiter:junit-jupiter-params:5.3.1')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.3.1')
 }
 
 uploadArchives {
@@ -43,15 +47,25 @@ tasks.publishPlugins.dependsOn tasks.setupPluginUpload
 pluginBundle {
   website = 'https://www.gradle.org/'
   vcsUrl = 'https://github.com/ImMorpheus/SpongeStart'
-  description = 'Gradle plugin to run sponge inside your workspace.'
   tags = ['sponge', 'minecraft']
+}
 
-  plugins {
-    spongestart {
-      id = 'com.qixalite.spongestart2'
-      displayName = 'SpongeStart'
+gradlePlugin {
+    plugins {
+        spongestart {
+            id = 'com.qixalite.spongestart2'
+            displayName = 'SpongeStart'
+            description = 'Gradle plugin to run sponge inside your workspace.'
+            implementationClass = 'com.qixalite.spongestart.SpongeStart'
+        }
     }
-  }
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
 }
 
 wrapper {
