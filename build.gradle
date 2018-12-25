@@ -43,7 +43,7 @@ task setupPluginUpload {
 tasks.publishPlugins.dependsOn tasks.setupPluginUpload
 
 pluginBundle {
-  website = 'https://www.gradle.org/'
+  website = 'https://www.spongepowered.org/'
   vcsUrl = 'https://github.com/ImMorpheus/SpongeStart'
   tags = ['sponge', 'minecraft']
 }
