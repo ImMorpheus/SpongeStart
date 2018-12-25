@@ -16,8 +16,6 @@ repositories {
 }
 
 dependencies {
-    compile 'org.json:json:20180130'
-
     testCompile gradleTestKit()
     testCompile('org.junit.jupiter:junit-jupiter-api:5.3.1')
     testCompile('org.junit.jupiter:junit-jupiter-params:5.3.1')

@@ -1,94 +1,86 @@
 package com.qixalite.spongestart;
 
-import com.qixalite.spongestart.tasks.ForgeDownloadTask;
-import com.qixalite.spongestart.tasks.GenerateForgeRunTask;
-import com.qixalite.spongestart.tasks.GenerateVanillaRunTask;
-import com.qixalite.spongestart.tasks.SetupForgeServerTask;
-import com.qixalite.spongestart.tasks.SetupVanillaServerTask;
-import com.qixalite.spongestart.tasks.SpongeForgeMavenDownloadTask;
-import com.qixalite.spongestart.tasks.SpongeVanillaMavenDownloadTask;
+import com.qixalite.spongestart.tasks.CleanFolderTask;
+import com.qixalite.spongestart.tasks.download.ForgeDownloadTask;
+import com.qixalite.spongestart.tasks.config.GenerateForgeRunTask;
+import com.qixalite.spongestart.tasks.config.GenerateVanillaRunTask;
+import com.qixalite.spongestart.tasks.setup.SetupForgeServerTask;
+import com.qixalite.spongestart.tasks.setup.SetupVanillaServerTask;
+import com.qixalite.spongestart.tasks.download.SpongeForgeMavenDownloadTask;
+import com.qixalite.spongestart.tasks.download.SpongeVanillaMavenDownloadTask;
 import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.tasks.SourceSet;
 
 import java.io.File;
-import java.util.Optional;
 
 @NonNullApi
-public class SpongeStart implements Plugin<Project>  {
+public class SpongeStart implements Plugin<Project> {
 
     public static final String NAME = "SpongeStart";
 
     @Override
     public void apply(Project target) {
 
-        target.getPlugins().apply("java");
         target.getPlugins().apply("idea");
 
-        target.getExtensions().create(NAME.toLowerCase(), SpongeStartExtension.class);
+        SpongeStartExtension extension = target.getExtensions().create(NAME.toLowerCase(), SpongeStartExtension.class);
 
-        target.afterEvaluate(projectAfter -> setupTasks(target));
-    }
+        target.afterEvaluate(project -> {
 
-    private void setupTasks(Project project) {
-        SpongeStartExtension extension = project.getExtensions().getByType(SpongeStartExtension.class);
+            setupDirs(project, extension);
 
-        setupDirs(project, extension);
+            //SpongeForge Download Task
+            SpongeForgeMavenDownloadTask downloadSpongeForge = project.getTasks().create("downloadSpongeForge", SpongeForgeMavenDownloadTask.class, task -> {
+                task.setDestination(new File(extension.getForgeServerFolder(), "mods" + File.separatorChar + "sponge.jar"));
+                task.setDescription("Download SpongeForge jar");
+            });
 
-        //SpongeForge Download Task
-        SpongeForgeMavenDownloadTask downloadSpongeForge = project.getTasks().create("downloadSpongeForge", SpongeForgeMavenDownloadTask.class);
-        downloadSpongeForge.setExtension(extension);
-        downloadSpongeForge.refresh();
+            //SpongeVanilla Download Task
+            SpongeVanillaMavenDownloadTask downloadSpongeVanilla = project.getTasks().create("downloadSpongeVanilla", SpongeVanillaMavenDownloadTask.class, task -> {
+                task.setDestination(new File(extension.getVanillaServerFolder(), "server.jar"));
+                task.setDescription("Download SpongeVanilla jar");
+            });
 
-        //SpongeVanilla Download Task
-        SpongeVanillaMavenDownloadTask downloadSpongeVanilla = project.getTasks().create("downloadSpongeVanilla", SpongeVanillaMavenDownloadTask.class);
-        downloadSpongeVanilla.setExtension(extension);
-        downloadSpongeVanilla.refresh();
-
-        //Forge Download Task
-        ForgeDownloadTask downloadForge = project.getTasks().create("downloadForge", ForgeDownloadTask.class);
-        downloadForge.dependsOn(downloadSpongeForge);
-        downloadForge.setExtension(extension);
-        downloadForge.refresh();
-
-
-        //generate intelij tasks
-        GenerateVanillaRunTask generateVanillaRun = project.getTasks().create("GenerateVanillaRun", GenerateVanillaRunTask.class);
-        generateVanillaRun.setExtension(extension);
-        generateVanillaRun.refresh();
-
-        GenerateForgeRunTask generateForgeRun = project.getTasks().create("GenerateForgeRun", GenerateForgeRunTask.class);
-        generateForgeRun.setExtension(extension);
-        generateForgeRun.refresh();
+            //Forge Download Task
+            ForgeDownloadTask downloadForge = project.getTasks().create("downloadForge", ForgeDownloadTask.class, task -> {
+                task.dependsOn(downloadSpongeForge);
+                task.setDestination(new File(extension.getForgeServerFolder(), "setup.jar"));
+                task.setDescription("Download Forge jar");
+            });
 
 
-        //Setup Forge task
-        SetupForgeServerTask setupForgeServer = project.getTasks().create("setupForgeServer", SetupForgeServerTask.class);
-        setupForgeServer.dependsOn(downloadForge, /*generateStartTask,*/ generateForgeRun);
-        setupForgeServer.setExtension(extension);
-        setupForgeServer.refresh();
+            //generate intellij tasks
+            GenerateVanillaRunTask generateVanillaRun = project.getTasks().create("GenerateVanillaRun", GenerateVanillaRunTask.class,
+                    task -> task.setDescription("Generate SpongeVanilla run configuration for IntelliJ")
+            );
 
-        //Setup Vanilla task
-        SetupVanillaServerTask setupVanillaServer = project.getTasks().create("setupVanillaServer", SetupVanillaServerTask.class);
-        setupVanillaServer.dependsOn(downloadSpongeVanilla, generateVanillaRun);
-        setupVanillaServer.setExtension(extension);
-        setupVanillaServer.refresh();
+            GenerateForgeRunTask generateForgeRun = project.getTasks().create("GenerateForgeRun", GenerateForgeRunTask.class,
+                    task -> task.setDescription("Generate SpongeForge run configuration for IntelliJ")
+            );
 
 
+            //Setup Forge task
+            SetupForgeServerTask setupForgeServer = project.getTasks().create("setupForgeServer", SetupForgeServerTask.class, task -> {
+                task.dependsOn(downloadForge);
+                task.setDestination(new File(extension.getForgeServerFolder()));
+                task.setDescription("Setup a SpongeForge server");
+            });
 
-        //TODO
-        //clean tasks
-//        project.getTasks().create("cleanVanillaServer", CleanFolderTask.class)
-//                .setFolder(new File(extension.getVanillaServerFolder()));
-//
-//        project.getTasks().create("cleanForgeServer", CleanFolderTask.class)
-//                .setFolder(new File(extension.getForgeServerFolder()));
+            //Setup Vanilla task
+            SetupVanillaServerTask setupVanillaServer = project.getTasks().create("setupVanillaServer", SetupVanillaServerTask.class, task -> {
+                task.dependsOn(downloadSpongeVanilla);
+                task.setDestination(new File(extension.getVanillaServerFolder()));
+                task.setDescription("Setup a SpongeVanilla server");
+            });
 
-        //project.getTasks().create("cleanSpongeStartCache", CleanFolderTask.class)
-          //      .setFolder(start);
+            //clean tasks
+            project.getTasks().create("cleanSpongeStartCache", CleanFolderTask.class, task -> {
+                task.setFolder(new File(extension.getCacheFolder()));
+                task.setDescription("Clean SpongeStart cache folder");
+            });
 
+        });
     }
 
 
@@ -100,18 +92,7 @@ public class SpongeStart implements Plugin<Project>  {
         }
         new File(cacheDir).mkdirs();
 
-        String buildDir = extension.getBuildClassesFolder();
-        if (buildDir == null) {
-            buildDir = project.getBuildDir().getAbsolutePath();
-            extension.setBuildClassesFolder(buildDir);
-        }
-
-        String resDir = extension.getResourcesFolder();
-        if (resDir == null) {
-            SourceSet set = project.getConvention().getPlugin(JavaPluginConvention.class).getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME);
-            resDir = set.getOutput().getResourcesDir().getAbsolutePath();
-            extension.setResourcesFolder(resDir);
-        }
+        new File(extension.getCacheFolder(), "downloads").mkdirs();
 
         String forgeDir = extension.getForgeServerFolder();
         if (forgeDir == null) {

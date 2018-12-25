@@ -1,6 +1,6 @@
-package com.qixalite.spongestart.tasks;
+package com.qixalite.spongestart.tasks.config;
 
-import com.qixalite.spongestart.SpongeStartExtension;
+import com.qixalite.spongestart.tasks.SpongeStartTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
@@ -23,7 +23,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.File;
 import java.io.IOException;
 
-public abstract class GenerateRunTask extends SpongeStartTask implements IRefreshable {
+public abstract class GenerateRunTask extends SpongeStartTask {
 
     private String name;
     private String main;
@@ -31,10 +31,12 @@ public abstract class GenerateRunTask extends SpongeStartTask implements IRefres
     private String vargs = "";
     private String dir;
     private String module;
-    private SpongeStartExtension extension;
+
 
     @TaskAction
     public void doStuff() {
+        this.module = getProject().getExtensions().getByType(IdeaModel.class).getModule().getName() + "_main";
+        setup();
 
         File f = new File(getProject().getRootDir().getAbsolutePath() + File.separatorChar + ".idea" + File.separatorChar + "workspace.xml");
 
@@ -68,30 +70,30 @@ public abstract class GenerateRunTask extends SpongeStartTask implements IRefres
             }
 
             Element configuration = doc.createElement("configuration");
-            configuration.setAttribute("name", name );
+            configuration.setAttribute("name", this.name );
             configuration.setAttribute("type", "Application");
 
             Element mainName = doc.createElement("option");
             mainName.setAttribute("name", "MAIN_CLASS_NAME");
-            mainName.setAttribute("value", main);
+            mainName.setAttribute("value", this.main);
 
             Element virtualParameters = doc.createElement("option");
             Element programParameters = doc.createElement("option");
 
             virtualParameters.setAttribute("name", "VM_PARAMETERS");
 
-            virtualParameters.setAttribute("value", vargs);
+            virtualParameters.setAttribute("value", this.vargs);
 
             programParameters.setAttribute("name", "PROGRAM_PARAMETERS");
-            programParameters.setAttribute("value", pargs);
+            programParameters.setAttribute("value", this.pargs);
 
 
             Element workingDir = doc.createElement("option");
             workingDir.setAttribute("name", "WORKING_DIRECTORY");
-            workingDir.setAttribute("value", dir);
+            workingDir.setAttribute("value", this.dir);
 
             Element moduleName = doc.createElement("module");
-            moduleName.setAttribute("name", module);
+            moduleName.setAttribute("name", this.module);
 
 
             configuration.appendChild(mainName);
@@ -117,19 +119,7 @@ public abstract class GenerateRunTask extends SpongeStartTask implements IRefres
         }
     }
 
-    @Override
-    public void refresh() {
-        this.module = getProject().getExtensions().getByType(IdeaModel.class).getModule().getName() + "_main";
-    }
-
-
-    protected final SpongeStartExtension getExtension() {
-        return this.extension;
-    }
-
-    public final void setExtension(SpongeStartExtension extension) {
-        this.extension = extension;
-    }
+    public abstract void setup();
 
     public void setName(String name) {
         this.name = name;
@@ -143,27 +133,15 @@ public abstract class GenerateRunTask extends SpongeStartTask implements IRefres
         this.dir = dir;
     }
 
-    public void setModule(String module) {
-        this.module = module;
-    }
-
-    public String getModule() {
-        return module;
-    }
-
     public void setVargs(String vargs) {
         this.vargs = vargs;
-    }
-
-    public String getVargs() {
-        return vargs;
     }
 
     public void setPargs(String pargs) {
         this.pargs = pargs;
     }
 
-    public String getPargs() {
-        return pargs;
+    public String getModule() {
+        return this.module;
     }
 }

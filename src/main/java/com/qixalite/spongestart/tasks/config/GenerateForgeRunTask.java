@@ -1,12 +1,14 @@
-package com.qixalite.spongestart.tasks;
+package com.qixalite.spongestart.tasks.config;
+
+import com.qixalite.spongestart.SpongeStartExtension;
 
 public class GenerateForgeRunTask extends GenerateSpongeRunTask {
 
     @Override
-    public void refresh() {
-        super.refresh();
+    public void setup() {
+        super.setup();
         setName("StartForgeServer");
-        setDir(getExtension().getForgeServerFolder());
+        setDir(getServerPath());
         setMain("net.minecraftforge.fml.relauncher.ServerLaunchWrapper");
         setPargs("--scan-classpath nogui");
         setDescription("Generate Forge run configuration to start a SpongeForge server");
@@ -14,6 +16,7 @@ public class GenerateForgeRunTask extends GenerateSpongeRunTask {
 
     @Override
     public String getServerPath() {
-        return getExtension().getForgeServerFolder();
+        SpongeStartExtension ext = getProject().getExtensions().getByType(SpongeStartExtension.class);
+        return ext.getForgeServerFolder();
     }
 }

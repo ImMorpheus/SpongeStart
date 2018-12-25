@@ -1,5 +1,6 @@
-package com.qixalite.spongestart.tasks;
+package com.qixalite.spongestart.tasks.setup;
 
+import com.qixalite.spongestart.SpongeStartExtension;
 import org.gradle.api.GradleException;
 
 import java.io.File;
@@ -13,11 +14,10 @@ public class SetupForgeServerTask extends SetupServerTask {
 
     @Override
     public void setupServer() {
-
         try {
             Process pr = new ProcessBuilder()
                     .command("java -jar setup.jar --installServer".split(" "))
-                    .directory(getLocation())
+                    .directory(getDestination())
                     .redirectErrorStream(true)
                     .start();
             pr.waitFor();
@@ -28,25 +28,26 @@ public class SetupForgeServerTask extends SetupServerTask {
         }
 
 
-        new File(getLocation(), "setup.jar").delete();
+        new File(getDestination(), "setup.jar").delete();
 
-        File forge = new File(getLocation(), "forge-" + getExtension().getMinecraft() + '-' + getExtension().getForge() + "-universal.jar");
-        File output = new File(getLocation(), "server.jar");
+        SpongeStartExtension ext = getProject().getExtensions().getByType(SpongeStartExtension.class);
+
+        File forge = new File(getDestination(), "forge-" + ext.getMinecraft() + '-' + ext.getForge() + "-universal.jar");
+        File output = new File(getDestination(), "server.jar");
 
         forge.renameTo(output);
 
-        new File(getLocation(), "libraries" + File.separatorChar + "net" + File.separatorChar + "minecraftforge").delete();
-        new File(getLocation(), "mods" + File.separatorChar + "mod_list.json").delete();
+        new File(getDestination(), "libraries" + File.separatorChar + "net" + File.separatorChar + "minecraftforge").delete();
+        new File(getDestination(), "mods" + File.separatorChar + "mod_list.json").delete();
 
     }
 
     @Override
     public void tweakServer() {
-        super.tweakServer();
-
-        File conf = new File(getLocation(), "config" + File.separatorChar + "forge.cfg");
+        File conf = new File(getDestination(), "config" + File.separatorChar + "forge.cfg");
         conf.getParentFile().mkdirs();
-        List<String> lines = Arrays.asList("general {",
+        List<String> lines = Arrays.asList(
+                "general {",
                 "    B:disableVersionCheck=true",
                 "}",
                 "version_checking {",
@@ -59,11 +60,5 @@ public class SetupForgeServerTask extends SetupServerTask {
         } catch (IOException e) {
             throw new GradleException("Failed to tweak forge config: " + e.getMessage());
         }
-    }
-
-    @Override
-    public void refresh() {
-        setLocation(new File(getExtension().getForgeServerFolder()));
-        setDescription("Setup a SpongeForge server");
     }
 }

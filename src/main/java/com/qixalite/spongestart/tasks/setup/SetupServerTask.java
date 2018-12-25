@@ -1,6 +1,7 @@
-package com.qixalite.spongestart.tasks;
+package com.qixalite.spongestart.tasks.setup;
 
 import com.qixalite.spongestart.SpongeStartExtension;
+import com.qixalite.spongestart.tasks.SpongeStartTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
@@ -13,10 +14,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class SetupServerTask extends SpongeStartTask implements IRefreshable {
+public abstract class SetupServerTask extends SpongeStartTask {
 
     private File location;
-    private SpongeStartExtension extension;
 
     @TaskAction
     public void doStuff() {
@@ -27,22 +27,25 @@ public abstract class SetupServerTask extends SpongeStartTask implements IRefres
     }
 
     private void acceptEula() {
-
         List<String> lines = Collections.singletonList("eula=true");
 
         try {
-            Files.write(new File(location, "eula.txt").toPath(), lines, Charset.defaultCharset());
+            Files.write(new File(this.location, "eula.txt").toPath(), lines, Charset.defaultCharset());
         } catch (IOException e) {
             throw new GradleException("Failed to accept eula: " + e.getMessage());
         }
     }
 
     public void tweakServer() {
-        File prop = new File(location, "server.properties");
-        List<String> lines = Arrays.asList("max-tick-time=-1",
+        SpongeStartExtension ext = getProject().getExtensions().getByType(SpongeStartExtension.class);
+
+        File prop = new File(this.location, "server.properties");
+
+        List<String> lines = Arrays.asList(
+                "max-tick-time=-1",
                 "snooper-enabled=false",
                 "allow-flight=true",
-                "online-mode=" + extension.getOnline()
+                "online-mode=" + ext.getOnline()
         );
 
         try {
@@ -54,22 +57,14 @@ public abstract class SetupServerTask extends SpongeStartTask implements IRefres
 
     public abstract void setupServer();
 
+
     @OutputDirectory
-    public final File getLocation() {
-        return location;
+    public final File getDestination() {
+        return this.location;
     }
 
-    public final void setLocation(File location) {
+    public final void setDestination(File location) {
         this.location = location;
-    }
-
-
-    protected final SpongeStartExtension getExtension() {
-        return this.extension;
-    }
-
-    public final void setExtension(SpongeStartExtension extension) {
-        this.extension = extension;
     }
 
 }

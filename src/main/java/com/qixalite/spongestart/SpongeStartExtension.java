@@ -8,14 +8,11 @@ public class SpongeStartExtension {
     private String online = "true";
     private String forgeServerFolder;
     private String vanillaServerFolder;
-    private String buildClassesFolder;
-    private String resourcesFolder;
     private String cacheFolder;
     private String forge;
-    private String api;
 
     public String getMinecraft() {
-        return minecraft;
+        return this.minecraft;
     }
 
     public void setMinecraft(String minecraft) {
@@ -23,7 +20,7 @@ public class SpongeStartExtension {
     }
 
     public String getSpongeForge() {
-        return spongeForge;
+        return this.spongeForge;
     }
 
     public void setSpongeForge(String spongeForge) {
@@ -31,7 +28,7 @@ public class SpongeStartExtension {
     }
 
     public String getSpongeVanilla() {
-        return spongeVanilla;
+        return this.spongeVanilla;
     }
 
     public void setSpongeVanilla(String spongeVanilla) {
@@ -39,7 +36,7 @@ public class SpongeStartExtension {
     }
 
     public String getOnline() {
-        return online;
+        return this.online;
     }
 
     public void setOnline(String online) {
@@ -47,7 +44,7 @@ public class SpongeStartExtension {
     }
 
     public String getForgeServerFolder() {
-        return forgeServerFolder;
+        return this.forgeServerFolder;
     }
 
     public void setForgeServerFolder(String forgeServerFolder) {
@@ -55,31 +52,15 @@ public class SpongeStartExtension {
     }
 
     public String getVanillaServerFolder() {
-        return vanillaServerFolder;
+        return this.vanillaServerFolder;
     }
 
     public void setVanillaServerFolder(String vanillaServerFolder) {
         this.vanillaServerFolder = vanillaServerFolder;
     }
 
-    public String getBuildClassesFolder() {
-        return buildClassesFolder;
-    }
-
-    public void setBuildClassesFolder(String buildClassesFolder) {
-        this.buildClassesFolder = buildClassesFolder;
-    }
-
-    public String getResourcesFolder() {
-        return resourcesFolder;
-    }
-
-    public void setResourcesFolder(String resourcesFolder) {
-        this.resourcesFolder = resourcesFolder;
-    }
-
     public String getCacheFolder() {
-        return cacheFolder;
+        return this.cacheFolder;
     }
 
     public void setCacheFolder(String cacheFolder) {
@@ -87,18 +68,10 @@ public class SpongeStartExtension {
     }
 
     public String getForge() {
-        return forge;
+        return this.forge;
     }
 
     public void setForge(String forge) {
         this.forge = forge;
-    }
-
-    public String getApi() {
-        return api;
-    }
-
-    public void setApi(String api) {
-        this.api = api;
     }
 }
