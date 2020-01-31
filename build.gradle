@@ -67,7 +67,7 @@ test {
 }
 
 wrapper {
-    gradleVersion = '4.10.2'
+    gradleVersion = '4.10.3'
     distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
 }
 
