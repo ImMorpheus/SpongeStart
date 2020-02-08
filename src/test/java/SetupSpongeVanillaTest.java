@@ -8,9 +8,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
-public class SetupSpongeForgeTest {
+public class SetupSpongeVanillaTest {
 
-    private final Path projectDir = Paths.get("testplugins").resolve("sponge");
+    private final Path projectDir = Paths.get("testplugins").resolve("sponge");;
     private final Path build = this.projectDir.resolve("build.gradle");
 
     @BeforeEach
@@ -35,7 +35,7 @@ public class SetupSpongeForgeTest {
                 .withDebug(true)
                 .withProjectDir(this.projectDir.toFile())
                 .withPluginClasspath()
-                .withArguments("setupForgeServer", "--stacktrace")
+                .withArguments("setupVanillaServer", "--stacktrace")
                 .build();
     }
 }

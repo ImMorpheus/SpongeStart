@@ -2,7 +2,10 @@ package com.qixalite.spongestart.tasks.config;
 
 import com.qixalite.spongestart.tasks.SpongeStartTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -20,128 +23,108 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public abstract class GenerateRunTask extends SpongeStartTask {
 
-    private String name;
-    private String main;
-    private String pargs = "";
+    private final String name;
+    private final String main;
+    private final String pargs;
     private String vargs = "";
-    private String dir;
-    private String module;
+    protected final String module;
+    protected final Property<Path> runDir;
 
+    protected GenerateRunTask(String name, String main, String pargs, Property<Path> runDir) {
+        this.name = name;
+        this.main = main;
+        this.pargs = pargs;
+        getProject().getPlugins().apply(IdeaPlugin.class);
+        this.module = getProject().getExtensions().getByType(IdeaModel.class).getModule().getName() + '.' + SourceSet.MAIN_SOURCE_SET_NAME;
+        this.runDir = runDir;
+    }
 
     @TaskAction
     public void doStuff() {
-        this.module = getProject().getExtensions().getByType(IdeaModel.class).getModule().getName() + "_main";
         setup();
 
-        File f = new File(getProject().getRootDir().getAbsolutePath() + File.separatorChar + ".idea" + File.separatorChar + "workspace.xml");
+        Path path = getProject().getRootDir().toPath().resolve(".idea").resolve("workspace.xml");
 
-        try {
+        Document doc;
+        try (InputStream is = Files.newInputStream(path)) {
+            doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is);
+        } catch (IOException | ParserConfigurationException | SAXException e) {
+            throw new GradleException("Something went wrong with your workspace.xml", e);
+        }
 
-            Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(f);
-
-            Node run = null;
-            NodeList comp = doc.getElementsByTagName("component");
-            for (int i = 0; i < comp.getLength(); i++) {
-                if (comp.item(i).getAttributes().getNamedItem("name").getNodeValue().equals("RunManager")) {
-                    run = comp.item(i);
-                    break;
-                }
+        Node run = null;
+        NodeList comp = doc.getElementsByTagName("component");
+        for (int i = 0; i < comp.getLength(); i++) {
+            if ("RunManager".equals(comp.item(i).getAttributes().getNamedItem("name").getNodeValue())) {
+                run = comp.item(i);
+                break;
             }
+        }
 
-            int count = -1;
-
-            while (count != 0) {
-                count = 0;
-                Element e = (Element) run.getChildNodes();
-                NodeList conf = e.getElementsByTagName("configuration");
-                for (int c = 0; c < conf.getLength(); c++) {
-                    Node n = conf.item(c);
-                    Node nm = n.getAttributes().getNamedItem("name");
-                    if (nm != null && nm.getNodeValue().equals(this.name)) {
-                        count++;
-                        e.removeChild(n);
-                    }
-                }
-            }
-
-            Element configuration = doc.createElement("configuration");
-            configuration.setAttribute("name", this.name );
-            configuration.setAttribute("type", "Application");
-
-            Element mainName = doc.createElement("option");
-            mainName.setAttribute("name", "MAIN_CLASS_NAME");
-            mainName.setAttribute("value", this.main);
-
-            Element virtualParameters = doc.createElement("option");
-            Element programParameters = doc.createElement("option");
-
-            virtualParameters.setAttribute("name", "VM_PARAMETERS");
-
-            virtualParameters.setAttribute("value", this.vargs);
-
-            programParameters.setAttribute("name", "PROGRAM_PARAMETERS");
-            programParameters.setAttribute("value", this.pargs);
+        if (run == null) {
+            Element runManager = doc.createElement("component");
+            runManager.setAttribute("name", "RunManager");
+            doc.getDocumentElement().appendChild(runManager);
+            run = runManager;
+        }
 
 
-            Element workingDir = doc.createElement("option");
-            workingDir.setAttribute("name", "WORKING_DIRECTORY");
-            workingDir.setAttribute("value", this.dir);
+        Element configuration = doc.createElement("configuration");
+        configuration.setAttribute("name", this.name + System.currentTimeMillis());
+        configuration.setAttribute("type", "Application");
+        configuration.setAttribute("factoryName", "Application");
 
-            Element moduleName = doc.createElement("module");
-            moduleName.setAttribute("name", this.module);
+        Element mainName = doc.createElement("option");
+        mainName.setAttribute("name", "MAIN_CLASS_NAME");
+        mainName.setAttribute("value", this.main);
+
+        Element moduleName = doc.createElement("module");
+        moduleName.setAttribute("name", this.module);
+
+        Element programParameters = doc.createElement("option");
+        programParameters.setAttribute("name", "PROGRAM_PARAMETERS");
+        programParameters.setAttribute("value", this.pargs);
+
+        Element virtualParameters = doc.createElement("option");
+        virtualParameters.setAttribute("name", "VM_PARAMETERS");
+        virtualParameters.setAttribute("value", this.vargs);
 
 
-            configuration.appendChild(mainName);
+        Element workingDir = doc.createElement("option");
+        workingDir.setAttribute("name", "WORKING_DIRECTORY");
+        workingDir.setAttribute("value", this.runDir.get().toString());
 
-            configuration.appendChild(virtualParameters);
-            configuration.appendChild(programParameters);
 
-            configuration.appendChild(workingDir);
-            configuration.appendChild(moduleName);
+        configuration.appendChild(mainName);
+        configuration.appendChild(moduleName);
+        configuration.appendChild(programParameters);
+        configuration.appendChild(virtualParameters);
+        configuration.appendChild(workingDir);
 
-            run.appendChild(configuration);
+        run.appendChild(configuration);
 
+        try (OutputStream os = Files.newOutputStream(path)) {
             Transformer transformer = TransformerFactory.newInstance().newTransformer();
-            Result output = new StreamResult(f);
+            Result output = new StreamResult(os);
             Source input = new DOMSource(doc);
 
             transformer.transform(input, output);
-
-        } catch (ParserConfigurationException | SAXException | IOException | TransformerConfigurationException e) {
-            throw new GradleException("Something went wrong with your workspace.xml: " + e.getMessage());
-        } catch (TransformerException e) {
-            e.printStackTrace();
+        } catch (TransformerException | IOException e) {
+            throw new GradleException("Error while saving workspace.xml", e);
         }
     }
 
     public abstract void setup();
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setMain(String main) {
-        this.main = main;
-    }
-
-    public void setDir(String dir) {
-        this.dir = dir;
-    }
-
     public void setVargs(String vargs) {
         this.vargs = vargs;
-    }
-
-    public void setPargs(String pargs) {
-        this.pargs = pargs;
-    }
-
-    public String getModule() {
-        return this.module;
     }
 }

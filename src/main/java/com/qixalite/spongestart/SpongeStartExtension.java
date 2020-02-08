@@ -1,77 +1,58 @@
 package com.qixalite.spongestart;
 
+import org.gradle.api.Project;
+import org.gradle.api.provider.Property;
+
+import java.nio.file.Path;
+
 public class SpongeStartExtension {
 
-    private String minecraft;
-    private String spongeForge;
-    private String spongeVanilla;
-    private String online = "true";
-    private String forgeServerFolder;
-    private String vanillaServerFolder;
-    private String cacheFolder;
-    private String forge;
+    private final Property<String> minecraft;
+    private final Property<String> forge;
+    private final Property<String> spongeForge;
+    private final Property<String> spongeVanilla;
+    private final Property<Path> forgeRunDir;
+    private final Property<Path> vanillaRunDir;
+    private final Property<Path> cacheDir;
 
-    public String getMinecraft() {
+    public SpongeStartExtension(Project project) {
+        this.minecraft = project.getObjects().property(String.class);
+        this.forge = project.getObjects().property(String.class);
+        this.spongeForge = project.getObjects().property(String.class);
+        this.spongeVanilla = project.getObjects().property(String.class);
+        this.forgeRunDir = project.getObjects().property(Path.class);
+        this.forgeRunDir.set(project.getProjectDir().toPath().resolve("run").resolve("forge"));
+        this.vanillaRunDir = project.getObjects().property(Path.class);
+        this.vanillaRunDir.set(project.getProjectDir().toPath().resolve("run").resolve("vanilla"));
+        this.cacheDir = project.getObjects().property(Path.class);
+        this.cacheDir.set(project.getGradle().getGradleUserHomeDir().toPath().resolve("cache").resolve(Constants.NAME));
+    }
+
+    public Property<String> getMinecraft() {
         return this.minecraft;
     }
 
-    public void setMinecraft(String minecraft) {
-        this.minecraft = minecraft;
-    }
-
-    public String getSpongeForge() {
-        return this.spongeForge;
-    }
-
-    public void setSpongeForge(String spongeForge) {
-        this.spongeForge = spongeForge;
-    }
-
-    public String getSpongeVanilla() {
-        return this.spongeVanilla;
-    }
-
-    public void setSpongeVanilla(String spongeVanilla) {
-        this.spongeVanilla = spongeVanilla;
-    }
-
-    public String getOnline() {
-        return this.online;
-    }
-
-    public void setOnline(String online) {
-        this.online = online;
-    }
-
-    public String getForgeServerFolder() {
-        return this.forgeServerFolder;
-    }
-
-    public void setForgeServerFolder(String forgeServerFolder) {
-        this.forgeServerFolder = forgeServerFolder;
-    }
-
-    public String getVanillaServerFolder() {
-        return this.vanillaServerFolder;
-    }
-
-    public void setVanillaServerFolder(String vanillaServerFolder) {
-        this.vanillaServerFolder = vanillaServerFolder;
-    }
-
-    public String getCacheFolder() {
-        return this.cacheFolder;
-    }
-
-    public void setCacheFolder(String cacheFolder) {
-        this.cacheFolder = cacheFolder;
-    }
-
-    public String getForge() {
+    public Property<String> getForge() {
         return this.forge;
     }
 
-    public void setForge(String forge) {
-        this.forge = forge;
+    public Property<String> getSpongeForge() {
+        return this.spongeForge;
+    }
+
+    public Property<String> getSpongeVanilla() {
+        return this.spongeVanilla;
+    }
+
+    public Property<Path> getForgeRunDir() {
+        return this.forgeRunDir;
+    }
+
+    public Property<Path> getVanillaRunDir() {
+        return this.vanillaRunDir;
+    }
+
+    public Property<Path> getCacheDir() {
+        return this.cacheDir;
     }
 }

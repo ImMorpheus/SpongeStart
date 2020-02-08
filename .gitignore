@@ -5,4 +5,4 @@ out
 .idea
 .gradle
 gradle.properties
-testplugin
+testplugins

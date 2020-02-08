@@ -1,70 +1,49 @@
 package com.qixalite.spongestart.tasks.setup;
 
-import com.qixalite.spongestart.SpongeStartExtension;
 import com.qixalite.spongestart.tasks.SpongeStartTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.tasks.OutputDirectory;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.TaskAction;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 public abstract class SetupServerTask extends SpongeStartTask {
 
-    private File location;
+    protected final Property<String> minecraft;
+    protected final Property<Path> run;
+
+    protected SetupServerTask(Property<String> minecraft, Property<Path> runDir) {
+        this.minecraft = minecraft;
+        this.run = runDir;
+    }
 
     @TaskAction
     public void doStuff() {
         acceptEula();
-        tweakServer();
-        setupServer();
-
+        setup();
     }
 
     private void acceptEula() {
-        List<String> lines = Collections.singletonList("eula=true");
-
         try {
-            Files.write(new File(this.location, "eula.txt").toPath(), lines, Charset.defaultCharset());
+            Files.write(this.run.get().resolve("eula.txt"), "eula=true".getBytes(), StandardOpenOption.CREATE);
         } catch (IOException e) {
-            throw new GradleException("Failed to accept eula: " + e.getMessage());
+            throw new GradleException("Failed to accept eula", e);
         }
     }
 
-    public void tweakServer() {
-        SpongeStartExtension ext = getProject().getExtensions().getByType(SpongeStartExtension.class);
-
-        File prop = new File(this.location, "server.properties");
-
-        List<String> lines = Arrays.asList(
-                "max-tick-time=-1",
-                "snooper-enabled=false",
-                "allow-flight=true",
-                "online-mode=" + ext.getOnline()
-        );
+    public void setup() {
+        String config = "max-tick-time=-1" + System.lineSeparator() +
+                        "snooper-enabled=false" + System.lineSeparator() +
+                        "allow-flight=true";
 
         try {
-            Files.write(prop.toPath(), lines, Charset.defaultCharset());
+            Files.write(this.run.get().resolve("server.properties"), config.getBytes(), StandardOpenOption.CREATE);
         } catch (IOException e) {
-            throw new GradleException("Failed to tweak server.properties: " + e.getMessage());
+            throw new GradleException("Failed to tweak server.properties", e);
         }
-    }
-
-    public abstract void setupServer();
-
-
-    @OutputDirectory
-    public final File getDestination() {
-        return this.location;
-    }
-
-    public final void setDestination(File location) {
-        this.location = location;
     }
 
 }

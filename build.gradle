@@ -1,10 +1,10 @@
 plugins {
     id 'java-gradle-plugin'
-    id 'com.gradle.plugin-publish' version '0.10.0'
+    id 'com.gradle.plugin-publish' version '0.10.1'
 }
 
 group 'com.qixalite'
-version '4.0.0'
+version '5.0.0'
 
 apply plugin: 'java'
 apply plugin: 'maven'
@@ -17,9 +17,9 @@ repositories {
 
 dependencies {
     testCompile gradleTestKit()
-    testCompile('org.junit.jupiter:junit-jupiter-api:5.3.1')
-    testCompile('org.junit.jupiter:junit-jupiter-params:5.3.1')
-    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.3.1')
+    testCompile('org.junit.jupiter:junit-jupiter-api:5.6.0')
+    testCompile('org.junit.jupiter:junit-jupiter-params:5.6.0')
+    testRuntime('org.junit.jupiter:junit-jupiter-engine:5.6.0')
 }
 
 uploadArchives {

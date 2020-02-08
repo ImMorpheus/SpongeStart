@@ -2,32 +2,42 @@ package com.qixalite.spongestart.tasks.download;
 
 import org.gradle.api.GradleException;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 public final class DownloadUtils {
 
-    public static void downloadToFile(String url, File to) {
-        URLConnection from = DownloadUtils.openURL(url);
+    private DownloadUtils() {
+    }
 
-        if (to.exists() && to.length() == from.getContentLength()) {
-            return;
+    public static void save(String url, Path to) {
+        URLConnection from = DownloadUtils.open(url);
+        Path parent = to.getParent();
+
+        try {
+            if (Files.exists(to) && Files.size(to) == from.getContentLength()) {
+                return;
+            }
+            Files.createDirectories(parent);
+        } catch (IOException e) {
+            throw new GradleException("Error", e);
         }
 
-        to.delete();
         try (InputStream in = from.getInputStream();
-             FileOutputStream out = new FileOutputStream(to)) {
+             OutputStream out = Files.newOutputStream(to, StandardOpenOption.CREATE)) {
 
-            byte[] buf = new byte[8192];
-            int l;
-            while (-1 != (l = in.read(buf))) {
-                out.write(buf, 0, l);
+            byte[] buf = new byte[4096];
+            int i;
+            while (-1 != (i = in.read(buf))) {
+                out.write(buf, 0, i);
             }
         } catch (FileNotFoundException e) {
             throw new GradleException("Unable to find " + from.getURL().getFile(), e);
@@ -36,7 +46,7 @@ public final class DownloadUtils {
         }
     }
 
-    private static URLConnection openURL(String url) {
+    private static URLConnection open(String url) {
         try {
             return new URL(url).openConnection();
         } catch (MalformedURLException e) {
@@ -44,8 +54,5 @@ public final class DownloadUtils {
         } catch (IOException e) {
             throw new GradleException("I/O exception while opening a connection to " + url, e);
         }
-    }
-
-    private DownloadUtils() {
     }
 }

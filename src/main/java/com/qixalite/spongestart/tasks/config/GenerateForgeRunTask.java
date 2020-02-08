@@ -1,22 +1,15 @@
 package com.qixalite.spongestart.tasks.config;
 
-import com.qixalite.spongestart.SpongeStartExtension;
+import org.gradle.api.provider.Property;
+
+import javax.inject.Inject;
+import java.nio.file.Path;
 
 public class GenerateForgeRunTask extends GenerateSpongeRunTask {
 
-    @Override
-    public void setup() {
-        super.setup();
-        setName("StartForgeServer");
-        setDir(getServerPath());
-        setMain("net.minecraftforge.fml.relauncher.ServerLaunchWrapper");
-        setPargs("--scan-classpath nogui");
+    @Inject
+    public GenerateForgeRunTask(String name, String main, String pargs, Property<Path> runDir) {
+        super(name, main, pargs, runDir);
         setDescription("Generate Forge run configuration to start a SpongeForge server");
-    }
-
-    @Override
-    public String getServerPath() {
-        SpongeStartExtension ext = getProject().getExtensions().getByType(SpongeStartExtension.class);
-        return ext.getForgeServerFolder();
     }
 }
